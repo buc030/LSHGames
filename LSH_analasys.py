@@ -5,13 +5,12 @@ import itertools
 
 #dim reduction d -> k
 class JLGausssianMatrix:
-    def __init__(self, epsilon, d, k, n):
+    def __init__(self, epsilon, d, n):
         self.epsilon = epsilon
         self.n = n
         self.d = d
-        self.k = k
+        self.k = self.getMinK()
 
-        assert k >= self.getMinK()
         #construct the matrix:
         sigma = (1.0/k)**0.5
         self.matrix = sigma*np.random.randn(k, d)
@@ -24,11 +23,11 @@ class JLGausssianMatrix:
 
 
 class GausssianPartitioning:
-    def __init__(self, eta, c, d, epsilon):
-        self.init(eta, c, d, epsilon)
+    def __init__(self, eta, c, d):
+        self.init(eta, c, d)
 
-    def init(self, eta, c, d, epsilon):
-        self.epsilon = epsilon
+    def init(self, eta, c, d):
+        self.epsilon = d**(-0.5)
         self.eta = eta
         self.c = c
         self.d = d
@@ -37,8 +36,11 @@ class GausssianPartitioning:
         for i in range(2**d):
             w = np.random.randn(self.d)
             self.P.append(w)
+        print 'Done building'
+    #incrementatly change c
+    def set_c(self, c):
+        self.c = c
 
-    
     def h(self, p):
         p = (p / np.linalg.norm(p))*self.eta*self.c;
         i = 0
@@ -51,16 +53,13 @@ class GausssianPartitioning:
 
     def generateRandomPointOnSphere(self):
         r = self.eta*self.c
-        p = np.random.randn(self.d - 1)
-        p = p / np.linalg.norm(p)
-        p = p*np.random.random() 
-        #print 'r = ' + str(r)
-        #print 'norm = ' + str(np.linalg.norm(p))
-        p = np.append(p, (r**2 - np.linalg.norm(p)**2)**0.5)
+        #p = np.random.randn(self.d)
+        p = np.random.uniform(0.0, 1.0, self.d)
+        p = (p / np.linalg.norm(p))*r
         return p
 
     def test(self, num_test_points):
-        num_of_distance_buckets = 100
+        num_of_distance_buckets = 10
         r = self.eta*self.c
         distance_to_collisions = {}  
         distance_to_non_collisions = {}  
@@ -70,9 +69,9 @@ class GausssianPartitioning:
         interval_size = (2*r)/float(num_of_distance_buckets)
 
         #the point must be on a sphere:
-        points = [self.generateRandomPointOnSphere() for i in range(num_test_points)]
-        
-        for (p1, p2) in itertools.combinations(points, 2):
+        for (p1, p2) in itertools.combinations([self.generateRandomPointOnSphere() for i in range(num_test_points)], 2):
+        #for i in range(num_test_points):
+            (p1, p2) = (self.generateRandomPointOnSphere() ,self.generateRandomPointOnSphere() )
             bucket_num = int(np.linalg.norm(p1 - p2)/interval_size)
 
             if bucket_num not in distance_to_collisions:
@@ -91,31 +90,25 @@ class GausssianPartitioning:
         plt.plot(
             [bucket_num*interval_size for bucket_num in distance_to_collisions.keys()], \
             [distance_to_collisions[bucket_num]/float(distance_to_collisions[bucket_num] + distance_to_non_collisions[bucket_num]) for bucket_num in distance_to_collisions.keys()], \
-            '--', label='Num of collisons / Total num of pairs within distance')
-
-        """
-        plt.plot(
-            [bucket_num*interval_size for bucket_num in distance_to_collisions.keys()], \
-            [distance_to_collisions[bucket_num] for bucket_num in distance_to_collisions.keys()], 'o')
-        plt.plot(
-            [bucket_num*interval_size for bucket_num in distance_to_collisions.keys()], \
-            [distance_to_collisions[bucket_num] for bucket_num in distance_to_collisions.keys()], '--', label='Num of Collisions')
+            '--', label='c = ' + str(self.c))
+        print 'Done testing'
 
 
-        plt.plot(
-            [bucket_num*interval_size for bucket_num in distance_to_non_collisions.keys()], \
-            [distance_to_non_collisions[bucket_num] for bucket_num in distance_to_non_collisions.keys()], 'o')
-        plt.plot(
-            [bucket_num*interval_size for bucket_num in distance_to_non_collisions.keys()], \
-            [distance_to_non_collisions[bucket_num] for bucket_num in distance_to_non_collisions.keys()], '--', label='Num of Non Collisions')
-        """
         
-        plt.ylabel('Collisions ratio')
-        plt.xlabel('Distance')
-        plt.legend()
-        plt.show()
-        print distance_to_collisions
 
 
-par = GausssianPartitioning(1, 1.5, 20, 0.1)
-par.test(1000)
+n = 250
+
+par = GausssianPartitioning(1, 1, 20)
+par.test(n)
+
+par.set_c(1.5)
+par.test(n)
+
+par.set_c(2)
+par.test(n)
+
+plt.ylabel('Collisions ratio')
+plt.xlabel('Distance')
+plt.legend()
+plt.show()
