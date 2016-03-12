@@ -44,6 +44,9 @@ class GausssianPartitioning:
     def set_c(self, c):
         self.c = c
 
+    def set_epsilon(self, epsilon):
+        self.epsilon = epsilon
+
     def h(self, p):
         p = (p / np.linalg.norm(p))*self.eta*self.c;
         i = 0
@@ -64,8 +67,8 @@ class GausssianPartitioning:
     def test(self, num_test_points):
         num_of_distance_buckets = 20
         r = self.eta*self.c
-        distance_to_collisions = {}  
-        distance_to_non_collisions = {}  
+        self.distance_to_collisions = {}  
+        self.distance_to_non_collisions = {}  
         #max distance is 2cr, distance buckets:
         #(0 - 2cr/num_of_distance_buckets) , (2cr/num_of_distance_buckets, 4cr/num_of_distance_buckets) 
         #(i2cr/num_of_distance_buckets, (i+1)2cr/num_of_distance_buckets) 
@@ -77,41 +80,106 @@ class GausssianPartitioning:
             #(p1, p2) = (self.generateRandomPointOnSphere() ,self.generateRandomPointOnSphere() )
             bucket_num = int(np.linalg.norm(p1 - p2)/interval_size)
 
-            if bucket_num not in distance_to_collisions:
-                distance_to_collisions[bucket_num] = 0
-            if bucket_num not in distance_to_non_collisions:
-                distance_to_non_collisions[bucket_num] = 0
+            if bucket_num not in self.distance_to_collisions:
+                self.distance_to_collisions[bucket_num] = 0
+            if bucket_num not in self.distance_to_non_collisions:
+                self.distance_to_non_collisions[bucket_num] = 0
             #print "self.h(p2) = " + str(self.h(p2))
             if self.h(p1) == self.h(p2):
-                distance_to_collisions[bucket_num] = distance_to_collisions[bucket_num] + 1
+                self.distance_to_collisions[bucket_num] = self.distance_to_collisions[bucket_num] + 1
             else:
-                distance_to_non_collisions[bucket_num] = distance_to_non_collisions[bucket_num] + 1
+                self.distance_to_non_collisions[bucket_num] = self.distance_to_non_collisions[bucket_num] + 1
 
-        plt.plot(
-            [(bucket_num*interval_size)/float(self.c) for bucket_num in distance_to_collisions.keys()], \
-            [distance_to_collisions[bucket_num]/float(distance_to_collisions[bucket_num] + distance_to_non_collisions[bucket_num]) for bucket_num in distance_to_collisions.keys()], 'o')
-        plt.plot(
-            [(bucket_num*interval_size)/float(self.c) for bucket_num in distance_to_collisions.keys()], \
-            [distance_to_collisions[bucket_num]/float(distance_to_collisions[bucket_num] + distance_to_non_collisions[bucket_num]) for bucket_num in distance_to_collisions.keys()], \
-            '--', label='c = ' + str(self.c))
+
+
+    def plot_c(self, normalize_c):
+        r = self.eta*self.c
+        num_of_distance_buckets = 20
+        interval_size = (2*r)/float(num_of_distance_buckets)
+        if normalize_c == False:
+            plt.plot(
+                [(bucket_num*interval_size)/float(1) for bucket_num in self.distance_to_collisions.keys()], \
+                [self.distance_to_collisions[bucket_num]/float(self.distance_to_collisions[bucket_num] + self.distance_to_non_collisions[bucket_num]) for bucket_num in self.distance_to_collisions.keys()], 'o')
+            plt.plot(
+                [(bucket_num*interval_size)/float(1) for bucket_num in self.distance_to_collisions.keys()], \
+                [self.distance_to_collisions[bucket_num]/float(self.distance_to_collisions[bucket_num] + self.distance_to_non_collisions[bucket_num]) for bucket_num in self.distance_to_collisions.keys()], \
+                '--', label='c = ' + str(self.c))
+        else:
+            plt.plot(
+                [(bucket_num*interval_size)/float(self.c) for bucket_num in self.distance_to_collisions.keys()], \
+                [self.distance_to_collisions[bucket_num]/float(self.distance_to_collisions[bucket_num] + self.distance_to_non_collisions[bucket_num]) for bucket_num in self.distance_to_collisions.keys()], 'o')
+            plt.plot(
+                [(bucket_num*interval_size)/float(self.c) for bucket_num in self.distance_to_collisions.keys()], \
+                [self.distance_to_collisions[bucket_num]/float(self.distance_to_collisions[bucket_num] + self.distance_to_non_collisions[bucket_num]) for bucket_num in self.distance_to_collisions.keys()], \
+                '--', label='c = ' + str(self.c))
         print 'Done testing'
+
+
+    def plot_epsilon(self, normalize_c):
+        r = self.eta*self.c
+        num_of_distance_buckets = 20
+        interval_size = (2*r)/float(num_of_distance_buckets)
+        if normalize_c == False:
+            plt.plot(
+                [(bucket_num*interval_size)/float(1) for bucket_num in self.distance_to_collisions.keys()], \
+                [self.distance_to_collisions[bucket_num]/float(self.distance_to_collisions[bucket_num] + self.distance_to_non_collisions[bucket_num]) for bucket_num in self.distance_to_collisions.keys()], 'o')
+            plt.plot(
+                [(bucket_num*interval_size)/float(1) for bucket_num in self.distance_to_collisions.keys()], \
+                [self.distance_to_collisions[bucket_num]/float(self.distance_to_collisions[bucket_num] + self.distance_to_non_collisions[bucket_num]) for bucket_num in self.distance_to_collisions.keys()], \
+                '--', label='epsilon = ' + str(self.epsilon))
+        else:
+            plt.plot(
+                [(bucket_num*interval_size)/float(self.c) for bucket_num in self.distance_to_collisions.keys()], \
+                [self.distance_to_collisions[bucket_num]/float(self.distance_to_collisions[bucket_num] + self.distance_to_non_collisions[bucket_num]) for bucket_num in self.distance_to_collisions.keys()], 'o')
+            plt.plot(
+                [(bucket_num*interval_size)/float(self.c) for bucket_num in self.distance_to_collisions.keys()], \
+                [self.distance_to_collisions[bucket_num]/float(self.distance_to_collisions[bucket_num] + self.distance_to_non_collisions[bucket_num]) for bucket_num in self.distance_to_collisions.keys()], \
+                '--', label='epsilon = ' + str(self.epsilon))
+        print 'Done testing'
+
 
 
         
 
 
-n = 1000
+n = 250
 
 par = GausssianPartitioning(1, 1, 20)
-par.test(n)
+orig_eps = par.epsilon
 
-par.set_c(1.5)
+par.set_epsilon(0.5*orig_eps)
 par.test(n)
+par.plot_epsilon(True)
 
-par.set_c(2)
+par.set_epsilon(orig_eps)
 par.test(n)
+par.plot_epsilon(True)
+
+par.set_epsilon(orig_eps*2)
+par.test(n)
+par.plot_epsilon(True)
 
 plt.ylabel('Collisions ratio')
 plt.xlabel('Distance / c')
+plt.legend()
+plt.show()
+
+
+
+
+par.set_epsilon(0.5*orig_eps)
+par.test(n)
+par.plot_epsilon(False)
+
+par.set_epsilon(orig_eps)
+par.test(n)
+par.plot_epsilon(False)
+
+par.set_epsilon(orig_eps*2)
+par.test(n)
+par.plot_epsilon(False)
+
+plt.ylabel('Collisions ratio')
+plt.xlabel('Distance')
 plt.legend()
 plt.show()
