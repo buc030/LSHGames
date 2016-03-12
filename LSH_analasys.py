@@ -12,11 +12,11 @@ class JLGausssianMatrix:
         self.k = self.getMinK()
 
         #construct the matrix:
-        sigma = (1.0/k)**0.5
-        self.matrix = sigma*np.random.randn(k, d)
+        sigma = (1.0/self.k)**0.5
+        self.matrix = sigma*np.random.randn(self.k, d)
 
     def getMinK(self):
-        return math.ceil((4*( (self.epsilon**2)/2.0 - (self.epsilon**3)/3.0)**-1)*math.log(self.n))
+        return math.ceil((4 * math.log(self.n)) / (self.epsilon**2 / 2.0 - self.epsilon**3 / 3.0))
 
     def map(self, x):
         return np.dot(self.matrix, x)
@@ -32,7 +32,7 @@ class GausssianPartitioning:
         self.c = c
         self.d = d
         self.P = []
-        #self.jl = JLGausssianMatrix(0.9, d, 1000)
+        #self.jl = JLGausssianMatrix(0.1, d, 250)
         #self.d = self.jl.getMinK()
 
         #copy points
@@ -62,7 +62,7 @@ class GausssianPartitioning:
         return p
 
     def test(self, num_test_points):
-        num_of_distance_buckets = 10
+        num_of_distance_buckets = 20
         r = self.eta*self.c
         distance_to_collisions = {}  
         distance_to_non_collisions = {}  
@@ -100,9 +100,9 @@ class GausssianPartitioning:
         
 
 
-n = 250
+n = 1000
 
-par = GausssianPartitioning(1, 1, 2000)
+par = GausssianPartitioning(1, 1, 20)
 par.test(n)
 
 par.set_c(1.5)
