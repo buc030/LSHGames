@@ -32,8 +32,11 @@ class GausssianPartitioning:
         self.c = c
         self.d = d
         self.P = []
+        #self.jl = JLGausssianMatrix(0.9, d, 1000)
+        #self.d = self.jl.getMinK()
+
         #copy points
-        for i in range(2**d):
+        for i in range(2**self.d):
             w = np.random.randn(self.d)
             self.P.append(w)
         print 'Done building'
@@ -71,7 +74,7 @@ class GausssianPartitioning:
         #the point must be on a sphere:
         for (p1, p2) in itertools.combinations([self.generateRandomPointOnSphere() for i in range(num_test_points)], 2):
         #for i in range(num_test_points):
-            (p1, p2) = (self.generateRandomPointOnSphere() ,self.generateRandomPointOnSphere() )
+            #(p1, p2) = (self.generateRandomPointOnSphere() ,self.generateRandomPointOnSphere() )
             bucket_num = int(np.linalg.norm(p1 - p2)/interval_size)
 
             if bucket_num not in distance_to_collisions:
@@ -85,10 +88,10 @@ class GausssianPartitioning:
                 distance_to_non_collisions[bucket_num] = distance_to_non_collisions[bucket_num] + 1
 
         plt.plot(
-            [bucket_num*interval_size for bucket_num in distance_to_collisions.keys()], \
+            [(bucket_num*interval_size)/float(self.c) for bucket_num in distance_to_collisions.keys()], \
             [distance_to_collisions[bucket_num]/float(distance_to_collisions[bucket_num] + distance_to_non_collisions[bucket_num]) for bucket_num in distance_to_collisions.keys()], 'o')
         plt.plot(
-            [bucket_num*interval_size for bucket_num in distance_to_collisions.keys()], \
+            [(bucket_num*interval_size)/float(self.c) for bucket_num in distance_to_collisions.keys()], \
             [distance_to_collisions[bucket_num]/float(distance_to_collisions[bucket_num] + distance_to_non_collisions[bucket_num]) for bucket_num in distance_to_collisions.keys()], \
             '--', label='c = ' + str(self.c))
         print 'Done testing'
@@ -99,7 +102,7 @@ class GausssianPartitioning:
 
 n = 250
 
-par = GausssianPartitioning(1, 1, 20)
+par = GausssianPartitioning(1, 1, 2000)
 par.test(n)
 
 par.set_c(1.5)
@@ -109,6 +112,6 @@ par.set_c(2)
 par.test(n)
 
 plt.ylabel('Collisions ratio')
-plt.xlabel('Distance')
+plt.xlabel('Distance / c')
 plt.legend()
 plt.show()
