@@ -1,4 +1,4 @@
-import math
+﻿import math
 import numpy as np
 import matplotlib.pyplot as plt
 import itertools
@@ -140,8 +140,106 @@ class GausssianPartitioning:
 
 
         
+class HammingLSH:
+    #points live in {0,..,M}^d
+    def __init__(self, d):
+        self.d = d
+        self.i = np.random.randint(0, d)
+    def h(self, p):
+        return p[i]
 
 
+class L1LSH:
+    #d - the dim
+    #delta - approximation factor
+    #a - points live in [0,a]^d
+    #number of functions to concacate
+    def __init__(self, d, delta, a, k):
+        self.a = a
+        self.M = (a*d)/float(delta)
+        self.d = d
+        self.delta = delta
+        self.s = float(self.d)/self.delta
+        self.k = k
+
+        self.selected_dim = []
+        self.offset_in_dim = []
+
+        for j in range(k):
+            i = np.random.randint(0, d*self.M)
+            self.selected_dim.append(i / self.M)
+            self.offset_in_dim.append(i % self.M)
+
+
+    def h(self, p):
+        
+        res = []
+        for j in range(len(self.selected_dim)):
+            selection = np.around(p*self.s)[self.selected_dim[j]]
+            if selection <= self.offset_in_dim[j]: #if selection is smaller than self.offset_in_dim, it means there is a one in its dM unary representation
+                res.append(1)
+            else:
+                res.append(0)
+        return res
+
+    def generateRandomPoint(self):
+        return np.random.uniform(0, self.a, self.d)
+
+    def test(self, num_test_points):
+        num_of_distance_buckets = 20
+        r = self.a
+        self.distance_to_collisions = {}  
+        self.distance_to_non_collisions = {}  
+        #max distance is 2cr, distance buckets:
+        #(0 - 2cr/num_of_distance_buckets) , (2cr/num_of_distance_buckets, 4cr/num_of_distance_buckets) 
+        #(i2cr/num_of_distance_buckets, (i+1)2cr/num_of_distance_buckets) 
+        interval_size = (2*r)/float(num_of_distance_buckets)
+
+        #the point must be on a sphere:
+        for (p1, p2) in itertools.combinations([self.generateRandomPoint() for i in range(num_test_points)], 2):
+        #for i in range(num_test_points):
+            #(p1, p2) = (self.generateRandomPointOnSphere() ,self.generateRandomPointOnSphere() )
+            bucket_num = int(np.linalg.norm(p1 - p2)/interval_size)
+
+            if bucket_num not in self.distance_to_collisions:
+                self.distance_to_collisions[bucket_num] = 0
+            if bucket_num not in self.distance_to_non_collisions:
+                self.distance_to_non_collisions[bucket_num] = 0
+            #print "self.h(p2) = " + str(self.h(p2))
+            if self.h(p1) == self.h(p2):
+                self.distance_to_collisions[bucket_num] = self.distance_to_collisions[bucket_num] + 1
+            else:
+                self.distance_to_non_collisions[bucket_num] = self.distance_to_non_collisions[bucket_num] + 1
+
+    def plot_delta(self):
+        r = self.a
+        num_of_distance_buckets = 20
+        interval_size = (2*r)/float(num_of_distance_buckets)
+        plt.plot(
+            [(bucket_num*interval_size)/float(1) for bucket_num in self.distance_to_collisions.keys()], \
+            [self.distance_to_collisions[bucket_num]/float(self.distance_to_collisions[bucket_num] + self.distance_to_non_collisions[bucket_num]) for bucket_num in self.distance_to_collisions.keys()], 'o')
+        plt.plot(
+            [(bucket_num*interval_size)/float(1) for bucket_num in self.distance_to_collisions.keys()], \
+            [self.distance_to_collisions[bucket_num]/float(self.distance_to_collisions[bucket_num] + self.distance_to_non_collisions[bucket_num]) for bucket_num in self.distance_to_collisions.keys()], \
+            '--', label='k = ' + str(self.k))
+        print 'Done testing'
+
+#(self, d, delta, a, k):
+lsh = L1LSH(20, 0.5, 100.0, 8)
+lsh.test(500)
+lsh.plot_delta()
+
+lsh = L1LSH(20, 0.5, 100.0, 10)
+lsh.test(500)
+lsh.plot_delta()
+
+lsh = L1LSH(20, 0.5, 100.0, 12)
+lsh.test(500)
+lsh.plot_delta()
+plt.legend()
+plt.show()
+
+"""
 n = 250
 
 par = GausssianPartitioning(1, 1, 20)
@@ -183,3 +281,4 @@ plt.ylabel('Collisions ratio')
 plt.xlabel('Distance')
 plt.legend()
 plt.show()
+"""
